@@ -1,0 +1,13 @@
+<html>
+<body>
+<script type="text/javascript">
+  var url = chrome.extension.getURL("injected.js");
+  webInspector.inspectedWindow.eval("var script = document.createElement('script'); script.src = '" + url + "'; document.head.appendChild(script);");
+
+  webInspector.panels.elements.createSidebarPane('SproutCore View', function(sidebar) {
+    sidebar.setPage( chrome.extension.getURL('wot.html') );
+    sidebar.setHeight("500px");
+  });
+</script>
+</body>
+</html>

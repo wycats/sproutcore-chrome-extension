@@ -1,0 +1,13 @@
+{
+  "name": "Chrome Query",
+  "version": "1.0",
+  "description": "Displays jQuery Object proeprties",
+  "devtools_page": "devtools.html",
+  "permissions":  [
+    "tabs",
+    "experimental",
+    "http://*/",
+    "https://*/",
+    "chrome-devtools://*/"
+  ]
+}

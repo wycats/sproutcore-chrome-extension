@@ -1,0 +1,135 @@
+<html>
+  <head>
+    <style>
+      body {
+        font-family: Helvetica Neue, Helvetica, sans-serif;
+        font-size: 11px;
+      }
+
+      header {
+        margin: 10px 0 20px 0;
+        font-size: 14px;
+        font-weight: bold;
+      }
+
+      h1 span {
+        font-weight: normal;
+        margin-left: 30px;
+        font-size: 11px;
+        float: right;
+        color: #ccc;
+      }
+
+      ul.monospace {
+        font-family: Menlo, Monaco, monospace;
+        list-style-type: none;
+        margin: 0 0 10px 10px;
+        padding-left: 0;
+      }
+
+      .prop-name {
+        color: #881391;
+      }
+
+      h1 {
+        font-size: 11px;
+        font-family: Menlo, Monaco, monospace;
+        padding-left: 10px;
+        background: url(tree-down.png) no-repeat left;
+        margin: 10px 0 0 0;
+      }
+
+      h1.no-props {
+        background: none;
+      }
+    </style>
+    <script src="jquery.js"></script>
+    <script src="handlebars.js"></script>
+
+    <script type="text/x-template">
+      {{#forIn result}}
+        <h1 {{^ifProps}}class='no-props'{{/ifProps}}><span>{{type}}{{^ifProps}} (none){{/ifProps}}</span></h1>
+
+        <ul class='monospace'>
+          {{#forIn properties}}
+            <li><span class='prop-name'>{{name}}</span>: <span class='prop-value'>{{value}}</span></li>
+          {{/forIn}}
+        </ul>
+      {{/forIn}}
+    </script>
+
+    <script>
+      Handlebars.registerHelper('forIn', function(context, options) {
+        var childContext, exposedChildContext, buffer = "";
+
+        for (var prop in context) {
+          if (!context.hasOwnProperty(prop)) { continue; }
+
+          childContext = context[prop];
+
+          exposedChildContext = Object.create(childContext);
+          exposedChildContext._key = prop;
+
+          buffer = buffer + options.fn(exposedChildContext);
+        }
+      });
+
+      Handlebars.registerHelper('ifProps', function(context, options) {
+        hasProps = false;
+        for (var prop in context) { hasProps = true; }
+
+        if (hasProps) {
+          return options.fn(context);
+        } else {
+          return options.inverse(context);
+        }
+      });
+
+      webInspector.panels.elements.onSelectionChanged.addListener(function() {
+        webInspector.inspectedWindow.eval("SproutQueryExtension.properties(SC.View.views[$0.id])", function(result) {
+          result = JSON.parse(result);
+          var buffer = "", resultProp, klassProp, prop, klass, anyProps;
+
+          var classProperties = true;
+
+          for (resultProp in result) {
+            klass = result[resultProp];
+            anyProps = false;
+
+            for (prop in klass.properties) { anyProps = true; }
+
+            if (classProperties) {
+              buffer = buffer + "<h1";
+              if (!anyProps) { buffer = buffer + " class='no-props'"; }
+              buffer = buffer + "><span>inherited properties";
+              if (!anyProps) { buffer = buffer + " (none)"; }
+              buffer = buffer + "</span>" + klass.name + "</h1>";
+            } else {
+              buffer = buffer + "<h1";
+              if (!anyProps) { buffer = buffer + " class='no-props'"; }
+              buffer = buffer + "><span>inherited properties";
+              if (!anyProps) { buffer = buffer + " (none)"; }
+              buffer = buffer + "</span>" + klass.name + "</h1>";
+            }
+
+            classProperties = false;
+
+            buffer = buffer + "<ul class='monospace'>";
+
+            for (prop in klass.properties) {
+              klassProp = klass.properties[prop];
+              buffer = buffer + "<li><span class='prop-name'>" + klassProp.name + "</span>: <span class='prop-value'>" + klassProp.value + "</span></li>";
+            }
+
+            buffer = buffer + "</ul>";
+          }
+
+          $("body").html(buffer);
+        });
+      });
+    </script>
+  </head>
+  <body>
+    HI
+  </body>
+</html>
