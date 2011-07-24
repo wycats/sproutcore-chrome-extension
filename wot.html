@@ -106,7 +106,7 @@
       webInspector.panels.elements.onSelectionChanged.addListener(function() {
         webInspector.inspectedWindow.eval("SproutQueryExtension.properties(SC.View.views[$0.id])", function(result) {
           result = JSON.parse(result);
-          var buffer = "", resultProp, klassProp, prop, klass, anyProps;
+          var buffer = "", resultProp, klassProp, prop, klass, anyProps, isArrayProp;
 
           var classProperties = true;
 
@@ -140,23 +140,27 @@
               return buffer;
             }
 
+            function arrayProp(klassProp) {
+              var propArray, buffer = "";
+
+              if (klassProp.value === "[]") { return simpleProp(klassProp); }
+
+              propArray = klassProp.value.replace(/^\[|\]$/g, '').split(',');
+              buffer += "<li class='array'><span class='prop-name'>" + klassProp.name + "</span>: ";
+              buffer += "[<ol class='array'>";
+              for (var i = 0; i < propArray.length; i++) {
+                buffer += "<li><span class='prop-value'>" + propArray[i] + "</span></li>";
+              }
+              buffer += "</ol><div style='clear: left;'></div>]</li>";
+              return buffer;
+            }
+
             for (prop in klass.properties) {
               klassProp = klass.properties[prop];
-              if (klassProp.value.charAt(0) == '[' && klassProp.value.substring(0, 7) != '[object') {
-                var propArray = klassProp.value.replace(/^\[|\]$/g, '').split(',');
-                if (propArray.length > 0 && propArray.toString() != "") {
-                  buffer += "<li class='array'><span class='prop-name'>" + klassProp.name + "</span>: ";
-                  buffer += "[<ol class='array'>";
-                  for (var i = 0; i < propArray.length; i++) {
-                    buffer += "<li><span class='prop-value'>" + propArray[i] + "</span></li>";
-                  }
-                  buffer += "</ol><div style='clear: left;'></div>]</li>";
-                } else {
-                  buffer += simpleProp(klassProp);
-                }
-              } else {
-                buffer += simpleProp(klassProp);
-              }
+              isArrayProp = klassProp.value.charAt(0) === '[' && klassProp.value.substring(0, 7) !== '[object';
+
+              if (isArrayProp) { buffer += arrayProp(klassProp); }
+              else { buffer += simpleProp(klassProp); }
             }
 
             buffer = buffer + "</ul>";
