@@ -23,10 +23,28 @@
       ul.monospace {
         font-family: Menlo, Monaco, monospace;
         list-style-type: none;
-        margin: 0 0 10px 10px;
+        margin: 0 0 10px 20px;
         padding-left: 0;
       }
 
+      ol.array {
+        list-style: none;
+        padding-left: 10px;
+      }
+
+      li.array {
+        margin-left: -10px;
+        padding-left: 10px;
+        background: url(tree-down.png) no-repeat 0 4px;
+      }
+
+      ol.array li {
+        float: left;
+        margin-right: 5px;
+      }
+      ol.array li:not(:last-child):after {
+        content: ', ';
+      }
       .prop-name {
         color: #881391;
       }
@@ -85,10 +103,31 @@
         }
       });
 
+      function simpleProp(klassProp) {
+        var buffer = "<li><span class='prop-name'>" + klassProp.name + "</span>: ";
+        buffer += "<span class='prop-value'>" + klassProp.value + "</span></li>";
+        return buffer;
+      }
+
+      function arrayProp(klassProp) {
+        var propArray, buffer = "";
+
+        if (klassProp.value === "[]") { return simpleProp(klassProp); }
+
+        propArray = klassProp.value.replace(/^\[|\]$/g, '').split(',');
+        buffer += "<li class='array'><span class='prop-name'>" + klassProp.name + "</span>: ";
+        buffer += "[<ol class='array'>";
+        for (var i = 0; i < propArray.length; i++) {
+          buffer += "<li><span class='prop-value'>" + propArray[i] + "</span></li>";
+        }
+        buffer += "</ol><div style='clear: left;'></div>]</li>";
+        return buffer;
+      }
+
       webInspector.panels.elements.onSelectionChanged.addListener(function() {
         webInspector.inspectedWindow.eval("SproutQueryExtension.properties(SC.View.views[$0.id])", function(result) {
           result = JSON.parse(result);
-          var buffer = "", resultProp, klassProp, prop, klass, anyProps;
+          var buffer = "", resultProp, klassProp, prop, klass, anyProps, isArrayProp;
 
           var classProperties = true;
 
@@ -118,7 +157,10 @@
 
             for (prop in klass.properties) {
               klassProp = klass.properties[prop];
-              buffer = buffer + "<li><span class='prop-name'>" + klassProp.name + "</span>: <span class='prop-value'>" + klassProp.value + "</span></li>";
+              isArrayProp = klassProp.value.charAt(0) === '[' && klassProp.value.substring(0, 7) !== '[object';
+
+              if (isArrayProp) { buffer += arrayProp(klassProp); }
+              else { buffer += simpleProp(klassProp); }
             }
 
             buffer = buffer + "</ul>";
