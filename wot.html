@@ -103,6 +103,27 @@
         }
       });
 
+      function simpleProp(klassProp) {
+        var buffer = "<li><span class='prop-name'>" + klassProp.name + "</span>: ";
+        buffer += "<span class='prop-value'>" + klassProp.value + "</span></li>";
+        return buffer;
+      }
+
+      function arrayProp(klassProp) {
+        var propArray, buffer = "";
+
+        if (klassProp.value === "[]") { return simpleProp(klassProp); }
+
+        propArray = klassProp.value.replace(/^\[|\]$/g, '').split(',');
+        buffer += "<li class='array'><span class='prop-name'>" + klassProp.name + "</span>: ";
+        buffer += "[<ol class='array'>";
+        for (var i = 0; i < propArray.length; i++) {
+          buffer += "<li><span class='prop-value'>" + propArray[i] + "</span></li>";
+        }
+        buffer += "</ol><div style='clear: left;'></div>]</li>";
+        return buffer;
+      }
+
       webInspector.panels.elements.onSelectionChanged.addListener(function() {
         webInspector.inspectedWindow.eval("SproutQueryExtension.properties(SC.View.views[$0.id])", function(result) {
           result = JSON.parse(result);
@@ -133,27 +154,6 @@
             classProperties = false;
 
             buffer = buffer + "<ul class='monospace'>";
-
-            function simpleProp(klassProp) {
-              var buffer = "<li><span class='prop-name'>" + klassProp.name + "</span>: ";
-              buffer += "<span class='prop-value'>" + klassProp.value + "</span></li>";
-              return buffer;
-            }
-
-            function arrayProp(klassProp) {
-              var propArray, buffer = "";
-
-              if (klassProp.value === "[]") { return simpleProp(klassProp); }
-
-              propArray = klassProp.value.replace(/^\[|\]$/g, '').split(',');
-              buffer += "<li class='array'><span class='prop-name'>" + klassProp.name + "</span>: ";
-              buffer += "[<ol class='array'>";
-              for (var i = 0; i < propArray.length; i++) {
-                buffer += "<li><span class='prop-value'>" + propArray[i] + "</span></li>";
-              }
-              buffer += "</ol><div style='clear: left;'></div>]</li>";
-              return buffer;
-            }
 
             for (prop in klass.properties) {
               klassProp = klass.properties[prop];
